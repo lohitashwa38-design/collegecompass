@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Campus Navigation — St. Joseph’s College of Engineering</title>
 
-  <!-- ✅ Correct Mappls SDK for local testing -->
-  <script src="https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/map_load?v=3.0"></script>
-
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
     #map { height: 100vh; width: 100vw; }
@@ -22,7 +19,10 @@
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    select { padding: 6px; font-size: 16px; }
+    select {
+      padding: 6px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -61,49 +61,93 @@
 
   <div id="map"></div>
 
+  <!-- ✅ Correct Mappls SDK Loader -->
+  <script
+    src="https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/map_load?v=3.0"
+    async
+    defer
+    onload="initMap()"
+  ></script>
+
   <script>
-    const map = new mappls.Map('map', { center: [80.21484, 12.86913], zoom: 17 });
+    function initMap() {
+      // Initialize Mappls map after SDK loads
+      const map = new mappls.Map("map", {
+        center: [80.21484, 12.86913],
+        zoom: 17
+      });
 
-    let userMarker = null, routePolyline = null, userCoords = null;
+      let userMarker = null;
+      let routePolyline = null;
+      let userCoords = null;
 
-    function showUserLocation(lng, lat) {
-      if (!userMarker) {
-        userMarker = new mappls.Marker({ position: { lat, lng }, map });
-      } else {
-        userMarker.setPosition({ lat, lng });
+      function showUserLocation(lng, lat) {
+        if (!userMarker) {
+          userMarker = new mappls.Marker({ position: { lat, lng }, map });
+        } else {
+          userMarker.setPosition({ lat, lng });
+        }
       }
+
+      // Watch live location
+      if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition(
+          pos => {
+            userCoords = [pos.coords.longitude, pos.coords.latitude];
+            showUserLocation(userCoords[0], userCoords[1]);
+            map.setCenter(userCoords);
+          },
+          err => alert("Location access denied: " + err.message),
+          { enableHighAccuracy: true }
+        );
+      } else {
+        alert("Geolocation not supported in your browser.");
+      }
+
+      // Destination routing
+      document.getElementById("destination").addEventListener("change", async function() {
+        const value = this.value;
+        if (!value || !userCoords) {
+          alert("Please allow location access and select a destination.");
+          return;
+        }
+
+        const [lat, lng] = value.split(",").map(Number);
+        if (routePolyline) routePolyline.setMap(null);
+
+        try {
+          const routeUrl = `https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/route_adv/driving/${userCoords[1]},${userCoords[0]};${lat},${lng}?geometries=polyline`;
+          const response = await fetch(routeUrl);
+          const data = await response.json();
+
+          if (!data.routes || !data.routes[0]) {
+            alert("No route found.");
+            return;
+          }
+
+          const geometry = data.routes[0].geometry;
+          const decoded = mappls.Polyline.decode(geometry);
+          const coordinates = decoded.map(p => ({ lat: p[0], lng: p[1] }));
+
+          routePolyline = new mappls.Polyline({
+            map,
+            path: coordinates,
+            strokeColor: "#0074D9",
+            strokeOpacity: 1.0,
+            strokeWeight: 5
+          });
+
+          map.fitBounds(new mappls.LatLngBounds(coordinates));
+        } catch (e) {
+          alert("Error fetching route: " + e.message);
+        }
+      });
+
+      console.log("✅ Mappls SDK and map loaded successfully");
     }
-
-    // Watch user location
-    if ("geolocation" in navigator) {
-      navigator.geolocation.watchPosition(pos => {
-        userCoords = [pos.coords.longitude, pos.coords.latitude];
-        showUserLocation(userCoords[0], userCoords[1]);
-        map.setCenter(userCoords);
-      }, err => alert("Location access denied: " + err.message), { enableHighAccuracy: true });
-    } else {
-      alert("Geolocation not supported in your browser.");
-    }
-
-    document.getElementById("destination").addEventListener("change", async function() {
-      const value = this.value;
-      if (!value || !userCoords) return alert("Please allow location access and select a destination.");
-      const [lat, lng] = value.split(",").map(Number);
-
-      if (routePolyline) routePolyline.setMap(null);
-
-      const url = `https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/route_adv/driving/${userCoords[1]},${userCoords[0]};${lat},${lng}?geometries=polyline`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.routes || !data.routes[0]) return alert("No route found.");
-
-      const decoded = mappls.Polyline.decode(data.routes[0].geometry);
-      const coords = decoded.map(p => ({ lat: p[0], lng: p[1] }));
-
-      routePolyline = new mappls.Polyline({ map, path: coords, strokeColor: "#0074D9", strokeWeight: 5 });
-      map.fitBounds(new mappls.LatLngBounds(coords));
-    });
   </script>
 </body>
 </html>
+
+
 
