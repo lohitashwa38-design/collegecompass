@@ -1,240 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Campus Navigator — St. Joseph’s College of Engineering</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Navigation — St. Joseph’s College of Engineering</title>
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<style>
-  html, body { margin: 0; height: 100%; }
-  #map { height: 100%; width: 100%; }
-  .controls {
-    position: absolute; top: 15px; left: 15px;
-    background: white; padding: 12px; border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-    z-index: 1000; width: 260px;
-  }
-  select, button {
-    width: 100%; padding: 8px; margin-top: 6px;
-    border-radius: 6px; border: 1px solid #0072ff;
-    font-size: 14px;
-  }
-  button {
-    background: #0072ff; color: white; font-weight: bold;
-    cursor: pointer;
-  }
-  button:hover { background: #005cd1; }
-  .back-btn {
-    position: absolute; top: 15px; right: 15px;
-    background: white; color: #0072ff;
-    padding: 10px 20px; border-radius: 8px;
-    text-decoration: none; font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    z-index: 1000;
-  }
-  .back-btn:hover { background: #0072ff; color: white; }
-</style>
+  <!-- Leaflet Routing Machine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; width: 100vw; }
+    .search-box {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    select {
+      padding: 5px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-<a href="index.html" class="back-btn">← Back</a>
-<div class="controls">
-  <label><b>Select Destination:</b></label>
-  <select id="destination">
-    <option value="">-- Choose Location --</option>
-    <option value="Engineering Auditorium">Engineering Auditorium</option>
-    <option value="Library">Library</option>
-    <option value="MGR Statue">MGR Statue</option>
-    <option value="1st Year Physics Lab">1st Year Physics Lab</option>
-    <option value="1st Year Chemistry Lab">1st Year Chemistry Lab</option>
-    <option value="Examination Block">Examination Block</option>
-    <option value="1st Year Computer Science Lab">1st Year Computer Science Lab</option>
-    <option value="Mechanical Lab">Mechanical Lab</option>
-    <option value="Administration Office Entrance">Administration Office Entrance</option>
-    <option value="Innovation Hackathon Centre">Innovation Hackathon Centre</option>
-    <option value="Department of Placement Block">Department of Placement Block</option>
-    <option value="Bus Bay Entrance">Bus Bay Entrance</option>
-    <option value="Bus Garage">Bus Garage</option>
-    <option value="1st Entrance of PEP Centre">1st Entrance of PEP Centre</option>
-    <option value="2nd Entrance of PEP Centre">2nd Entrance of PEP Centre</option>
-    <option value="Mens Hostel">Mens Hostel</option>
-    <option value="Girls Hostel">Girls Hostel</option>
-    <option value="Chapel">Chapel</option>
-    <option value="St. Joseph’s Football Ground">St. Joseph’s Football Ground</option>
-    <option value="Block 1">Block 1</option>
-    <option value="Block 2">Block 2</option>
-    <option value="Block 3">Block 3</option>
-    <option value="Block 4">Block 4</option>
-    <option value="Block 5">Block 5</option>
-    <option value="Department Blocks Road (2nd Year)">Department Blocks Road (2nd Year)</option>
-  </select>
-  <button id="goBtn">Navigate</button>
-</div>
-<div id="map"></div>
 
-<script>
-// -----------------------------
-// 1. Map setup
-// -----------------------------
-const map = L.map('map').setView([12.8697, 80.2160], 17);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 20,
-  attribution: '© OpenStreetMap'
-}).addTo(map);
+  <div class="search-box">
+    <label for="destination">Select Destination: </label>
+    <select id="destination">
+      <option value="">--Choose a location--</option>
+      <option value="12.86840,80.21597">Engineering Auditorium</option>
+      <option value="12.86972,80.21508">Library</option>
+      <option value="12.86961,80.21569">MGR Statue</option>
+      <option value="12.87061,80.21600">1st Year Physics Lab</option>
+      <option value="12.87064,80.21603">1st Year Chemistry Lab</option>
+      <option value="12.87078,80.21636">Examination Block</option>
+      <option value="12.86986,80.21619">1st Year Computer Science Lab</option>
+      <option value="12.87028,80.21586">Mechanical Lab</option>
+      <option value="12.86950,80.21673">Administration Office Entrance</option>
+      <option value="12.86953,80.21714">Innovation Hackathon Centre</option>
+      <option value="12.87081,80.21703">Department of Placement Block</option>
+      <option value="12.87119,80.21586">Bus Bay Entrance</option>
+      <option value="12.87139,80.21647">Bus Garage</option>
+      <option value="12.87050,80.21714">1st Entrance of PEP Centre</option>
+      <option value="12.86972,80.21700">2nd Entrance of PEP Centre</option>
+      <option value="12.86775,80.21511">Mens Hostel</option>
+      <option value="12.87133,80.21400">Girls Hostel</option>
+      <option value="12.87147,80.21558">Chapel</option>
+      <option value="12.86781,80.21322">St. Joseph's Football Ground</option>
+      <option value="12.86900,80.21639">Block 1</option>
+      <option value="12.86906,80.21608">Block 2</option>
+      <option value="12.86911,80.21589">Block 3</option>
+      <option value="12.86916,80.21550">Block 4</option>
+      <option value="12.86920,80.21528">Block 5</option>
+      <option value="12.86828,80.21658">Department Blocks Road (2nd Year)</option>
+    </select>
+  </div>
 
-// -----------------------------
-// 2. Campus nodes (landmarks)
-// -----------------------------
-const nodes = {
-  "Engineering Auditorium": [12.86840, 80.21597],
-  "Library": [12.86972, 80.21508],
-  "MGR Statue": [12.86961, 80.21514],
-  "1st Year Physics Lab": [12.87061, 80.21594],
-  "1st Year Chemistry Lab": [12.87064, 80.21597],
-  "Examination Block": [12.87078, 80.21636],
-  "1st Year Computer Science Lab": [12.86986, 80.21620],
-  "Mechanical Lab": [12.87028, 80.21587],
-  "Administration Office Entrance": [12.86950, 80.21672],
-  "Innovation Hackathon Centre": [12.86953, 80.21697],
-  "Department of Placement Block": [12.87081, 80.21693],
-  "Bus Bay Entrance": [12.87119, 80.21586],
-  "Bus Garage": [12.87138, 80.21647],
-  "1st Entrance of PEP Centre": [12.87050, 80.21647],
-  "2nd Entrance of PEP Centre": [12.86972, 80.21633],
-  "Mens Hostel": [12.86775, 80.21510],
-  "Girls Hostel": [12.87133, 80.21400],
-  "Chapel": [12.87147, 80.21558],
-  "St. Joseph’s Football Ground": [12.86781, 80.21322],
-  "Block 1": [12.86900, 80.21639],
-  "Block 2": [12.86907, 80.21609],
-  "Block 3": [12.86911, 80.21589],
-  "Block 4": [12.86916, 80.21550],
-  "Block 5": [12.86920, 80.21530],
-  "Department Blocks Road (2nd Year)": [12.86827, 80.21658]
-};
+  <div id="map"></div>
 
-// add markers
-for (const [name, coords] of Object.entries(nodes))
-  L.marker(coords).addTo(map).bindPopup(name);
+  <script>
+    const campusCenter = [12.86913, 80.21484];
+    const map = L.map('map').setView(campusCenter, 17);
 
-// -----------------------------
-// 3. Walkable connections (edges)
-// -----------------------------
-// Each pair represents a walkable path between two landmarks
-const edges = [
-  ["Engineering Auditorium","Library"],
-  ["Library","MGR Statue"],
-  ["MGR Statue","1st Year Physics Lab"],
-  ["1st Year Physics Lab","1st Year Chemistry Lab"],
-  ["1st Year Chemistry Lab","Examination Block"],
-  ["Examination Block","1st Year Computer Science Lab"],
-  ["1st Year Computer Science Lab","Mechanical Lab"],
-  ["Mechanical Lab","Administration Office Entrance"],
-  ["Administration Office Entrance","Innovation Hackathon Centre"],
-  ["Innovation Hackathon Centre","Department of Placement Block"],
-  ["Department of Placement Block","Bus Bay Entrance"],
-  ["Bus Bay Entrance","Bus Garage"],
-  ["Bus Garage","1st Entrance of PEP Centre"],
-  ["1st Entrance of PEP Centre","2nd Entrance of PEP Centre"],
-  ["2nd Entrance of PEP Centre","Block 1"],
-  ["Block 1","Block 2"],
-  ["Block 2","Block 3"],
-  ["Block 3","Block 4"],
-  ["Block 4","Block 5"],
-  ["Block 5","Department Blocks Road (2nd Year)"],
-  ["Mens Hostel","Engineering Auditorium"],
-  ["Girls Hostel","Bus Bay Entrance"],
-  ["Chapel","Bus Garage"],
-  ["St. Joseph’s Football Ground","Mens Hostel"]
-];
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-// -----------------------------
-// 4. Utility functions
-// -----------------------------
-function haversine(a, b) {
-  const toRad = deg => deg * Math.PI / 180;
-  const R = 6371e3;
-  const lat1 = toRad(a[0]), lat2 = toRad(b[0]);
-  const dLat = lat2 - lat1, dLon = toRad(b[1] - a[1]);
-  const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
-}
+    let routingControl = null;
+    let userMarker = null;
+    let userCoords = null;
 
-// Build graph with weights
-const graph = {};
-for (const [a,b] of edges) {
-  const d = haversine(nodes[a], nodes[b]);
-  if (!graph[a]) graph[a] = {};
-  if (!graph[b]) graph[b] = {};
-  graph[a][b] = d; graph[b][a] = d;
-}
-
-// Dijkstra’s shortest path
-function shortestPath(start, end) {
-  const dist = {}, prev = {}, q = new Set(Object.keys(graph));
-  for (const n of q) dist[n] = Infinity;
-  dist[start] = 0;
-
-  while (q.size) {
-    let u = [...q].reduce((a,b) => dist[a] < dist[b] ? a : b);
-    q.delete(u);
-    if (u === end) break;
-
-    for (const [v, w] of Object.entries(graph[u])) {
-      const alt = dist[u] + w;
-      if (alt < dist[v]) { dist[v] = alt; prev[v] = u; }
+    function showUserLocation(lat, lng) {
+      if (!userMarker) {
+        userMarker = L.marker([lat, lng], { title: "You are here" })
+          .addTo(map)
+          .bindPopup("You are here")
+          .openPopup();
+      } else {
+        userMarker.setLatLng([lat, lng]);
+      }
     }
-  }
-  const path = [];
-  let u = end;
-  while (u) { path.unshift(u); u = prev[u]; }
-  return path;
-}
 
-// -----------------------------
-// 5. GPS + Navigation
-// -----------------------------
-let userMarker, routeLine;
+    function onLocationSuccess(pos) {
+      userCoords = [pos.coords.latitude, pos.coords.longitude];
+      showUserLocation(userCoords[0], userCoords[1]);
+      map.setView(userCoords, 17);
+    }
 
-navigator.geolocation.watchPosition(pos => {
-  const {latitude, longitude} = pos.coords;
-  if (!userMarker) {
-    userMarker = L.marker([latitude, longitude], {
-      icon: L.icon({
-        iconUrl: "https://cdn-icons-png.flaticon.com/512/64/64113.png",
-        iconSize: [30,30], iconAnchor: [15,30]
-      })
-    }).addTo(map).bindPopup("You are here");
-  } else {
-    userMarker.setLatLng([latitude, longitude]);
-  }
-}, () => alert("Enable GPS to use navigation."), {enableHighAccuracy:true});
+    function onLocationError(err) {
+      alert("Unable to get your location: " + err.message);
+    }
 
-document.getElementById("goBtn").addEventListener("click", () => {
-  const destName = document.getElementById("destination").value;
-  if (!destName) return alert("Please select a destination.");
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(onLocationSuccess, onLocationError, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 10000
+      });
+    } else {
+      alert("Geolocation not supported by this browser.");
+    }
 
-  if (!userMarker) return alert("Waiting for GPS...");
+    document.getElementById("destination").addEventListener("change", function() {
+      const value = this.value;
+      if (!value || !userCoords) {
+        alert("Please allow location access and select a destination.");
+        return;
+      }
 
-  // Find closest node to user
-  const userLoc = userMarker.getLatLng();
-  let nearestNode = null, nearestDist = Infinity;
-  for (const [name, coords] of Object.entries(nodes)) {
-    const d = haversine([userLoc.lat, userLoc.lng], coords);
-    if (d < nearestDist) { nearestDist = d; nearestNode = name; }
-  }
+      const [lat, lng] = value.split(",").map(Number);
+      const destCoords = [lat, lng];
 
-  const pathNames = shortestPath(nearestNode, destName);
-  if (pathNames.length < 2) return alert("No path found.");
+      if (routingControl) map.removeControl(routingControl);
 
-  const coords = pathNames.map(n => nodes[n]);
-  if (routeLine) map.removeLayer(routeLine);
-  routeLine = L.polyline(coords, {color:"blue", weight:5}).addTo(map);
-  map.fitBounds(routeLine.getBounds());
-});
-</script>
+      routingControl = L.Routing.control({
+        waypoints: [
+          L.latLng(userCoords[0], userCoords[1]),
+          L.latLng(destCoords[0], destCoords[1])
+        ],
+        routeWhileDragging: false,
+        show: false,
+        addWaypoints: false,
+        draggableWaypoints: false,
+        createMarker: () => null,
+        lineOptions: { styles: [{ color: 'blue', weight: 5 }] }
+      }).addTo(map);
+    });
+  </script>
 </body>
 </html>
+
+
