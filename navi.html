@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Campus Navigation — St. Joseph’s College of Engineering</title>
 
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Leaflet Routing Machine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
     #map { height: 100vh; width: 100vw; }
@@ -20,7 +28,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     select {
-      padding: 6px;
+      padding: 5px;
       font-size: 16px;
     }
   </style>
@@ -28,7 +36,7 @@
 <body>
 
   <div class="search-box">
-    <label for="destination"><b>Select Destination:</b> </label>
+    <label for="destination">Select Destination: </label>
     <select id="destination">
       <option value="">--Choose a location--</option>
       <option value="12.86840,80.21597">Engineering Auditorium</option>
@@ -61,93 +69,77 @@
 
   <div id="map"></div>
 
-  <!-- ✅ Correct Mappls SDK Loader -->
-  <script
-    src="https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/map_load?v=3.0"
-    async
-    defer
-    onload="initMap()"
-  ></script>
-
   <script>
-    function initMap() {
-      // Initialize Mappls map after SDK loads
-      const map = new mappls.Map("map", {
-        center: [80.21484, 12.86913],
-        zoom: 17
-      });
+    const campusCenter = [12.86913, 80.21484];
+    const map = L.map('map').setView(campusCenter, 17);
 
-      let userMarker = null;
-      let routePolyline = null;
-      let userCoords = null;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-      function showUserLocation(lng, lat) {
-        if (!userMarker) {
-          userMarker = new mappls.Marker({ position: { lat, lng }, map });
-        } else {
-          userMarker.setPosition({ lat, lng });
-        }
-      }
+    let routingControl = null;
+    let userMarker = null;
+    let userCoords = null;
 
-      // Watch live location
-      if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition(
-          pos => {
-            userCoords = [pos.coords.longitude, pos.coords.latitude];
-            showUserLocation(userCoords[0], userCoords[1]);
-            map.setCenter(userCoords);
-          },
-          err => alert("Location access denied: " + err.message),
-          { enableHighAccuracy: true }
-        );
+    function showUserLocation(lat, lng) {
+      if (!userMarker) {
+        userMarker = L.marker([lat, lng], { title: "You are here" })
+          .addTo(map)
+          .bindPopup("You are here")
+          .openPopup();
       } else {
-        alert("Geolocation not supported in your browser.");
+        userMarker.setLatLng([lat, lng]);
+      }
+    }
+
+    function onLocationSuccess(pos) {
+      userCoords = [pos.coords.latitude, pos.coords.longitude];
+      showUserLocation(userCoords[0], userCoords[1]);
+      map.setView(userCoords, 17);
+    }
+
+    function onLocationError(err) {
+      alert("Unable to get your location: " + err.message);
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(onLocationSuccess, onLocationError, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 10000
+      });
+    } else {
+      alert("Geolocation not supported by this browser.");
+    }
+
+    document.getElementById("destination").addEventListener("change", function() {
+      const value = this.value;
+      if (!value || !userCoords) {
+        alert("Please allow location access and select a destination.");
+        return;
       }
 
-      // Destination routing
-      document.getElementById("destination").addEventListener("change", async function() {
-        const value = this.value;
-        if (!value || !userCoords) {
-          alert("Please allow location access and select a destination.");
-          return;
-        }
+      const [lat, lng] = value.split(",").map(Number);
+      const destCoords = [lat, lng];
 
-        const [lat, lng] = value.split(",").map(Number);
-        if (routePolyline) routePolyline.setMap(null);
+      if (routingControl) map.removeControl(routingControl);
 
-        try {
-          const routeUrl = `https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/route_adv/driving/${userCoords[1]},${userCoords[0]};${lat},${lng}?geometries=polyline`;
-          const response = await fetch(routeUrl);
-          const data = await response.json();
-
-          if (!data.routes || !data.routes[0]) {
-            alert("No route found.");
-            return;
-          }
-
-          const geometry = data.routes[0].geometry;
-          const decoded = mappls.Polyline.decode(geometry);
-          const coordinates = decoded.map(p => ({ lat: p[0], lng: p[1] }));
-
-          routePolyline = new mappls.Polyline({
-            map,
-            path: coordinates,
-            strokeColor: "#0074D9",
-            strokeOpacity: 1.0,
-            strokeWeight: 5
-          });
-
-          map.fitBounds(new mappls.LatLngBounds(coordinates));
-        } catch (e) {
-          alert("Error fetching route: " + e.message);
-        }
-      });
-
-      console.log("✅ Mappls SDK and map loaded successfully");
-    }
+      routingControl = L.Routing.control({
+        waypoints: [
+          L.latLng(userCoords[0], userCoords[1]),
+          L.latLng(destCoords[0], destCoords[1])
+        ],
+        routeWhileDragging: false,
+        show: false,
+        addWaypoints: false,
+        draggableWaypoints: false,
+        createMarker: () => null,
+        lineOptions: { styles: [{ color: 'blue', weight: 5 }] }
+      }).addTo(map);
+    });
   </script>
 </body>
 </html>
-
 
 
