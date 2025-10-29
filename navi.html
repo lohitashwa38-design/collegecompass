@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Navigation — St. Joseph’s College of Engineering</title>
+
+  <!-- ✅ Correct Mappls SDK for local testing -->
+  <script src="https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/map_load?v=3.0"></script>
+
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; width: 100vw; }
+    .search-box {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    select { padding: 6px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+  <div class="search-box">
+    <label for="destination"><b>Select Destination:</b> </label>
+    <select id="destination">
+      <option value="">--Choose a location--</option>
+      <option value="12.86840,80.21597">Engineering Auditorium</option>
+      <option value="12.86972,80.21508">Library</option>
+      <option value="12.86961,80.21569">MGR Statue</option>
+      <option value="12.87061,80.21600">1st Year Physics Lab</option>
+      <option value="12.87064,80.21603">1st Year Chemistry Lab</option>
+      <option value="12.87078,80.21636">Examination Block</option>
+      <option value="12.86986,80.21619">1st Year Computer Science Lab</option>
+      <option value="12.87028,80.21586">Mechanical Lab</option>
+      <option value="12.86950,80.21673">Administration Office Entrance</option>
+      <option value="12.86953,80.21714">Innovation Hackathon Centre</option>
+      <option value="12.87081,80.21703">Department of Placement Block</option>
+      <option value="12.87119,80.21586">Bus Bay Entrance</option>
+      <option value="12.87139,80.21647">Bus Garage</option>
+      <option value="12.87050,80.21714">1st Entrance of PEP Centre</option>
+      <option value="12.86972,80.21700">2nd Entrance of PEP Centre</option>
+      <option value="12.86775,80.21511">Mens Hostel</option>
+      <option value="12.87133,80.21400">Girls Hostel</option>
+      <option value="12.87147,80.21558">Chapel</option>
+      <option value="12.86781,80.21322">St. Joseph's Football Ground</option>
+      <option value="12.86900,80.21639">Block 1</option>
+      <option value="12.86906,80.21608">Block 2</option>
+      <option value="12.86911,80.21589">Block 3</option>
+      <option value="12.86916,80.21550">Block 4</option>
+      <option value="12.86920,80.21528">Block 5</option>
+      <option value="12.86828,80.21658">Department Blocks Road (2nd Year)</option>
+    </select>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    const map = new mappls.Map('map', { center: [80.21484, 12.86913], zoom: 17 });
+
+    let userMarker = null, routePolyline = null, userCoords = null;
+
+    function showUserLocation(lng, lat) {
+      if (!userMarker) {
+        userMarker = new mappls.Marker({ position: { lat, lng }, map });
+      } else {
+        userMarker.setPosition({ lat, lng });
+      }
+    }
+
+    // Watch user location
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(pos => {
+        userCoords = [pos.coords.longitude, pos.coords.latitude];
+        showUserLocation(userCoords[0], userCoords[1]);
+        map.setCenter(userCoords);
+      }, err => alert("Location access denied: " + err.message), { enableHighAccuracy: true });
+    } else {
+      alert("Geolocation not supported in your browser.");
+    }
+
+    document.getElementById("destination").addEventListener("change", async function() {
+      const value = this.value;
+      if (!value || !userCoords) return alert("Please allow location access and select a destination.");
+      const [lat, lng] = value.split(",").map(Number);
+
+      if (routePolyline) routePolyline.setMap(null);
+
+      const url = `https://apis.mappls.com/advancedmaps/v1/dpsmaaiwlnzmgkfppgoahwafytpzefnettxo/route_adv/driving/${userCoords[1]},${userCoords[0]};${lat},${lng}?geometries=polyline`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.routes || !data.routes[0]) return alert("No route found.");
+
+      const decoded = mappls.Polyline.decode(data.routes[0].geometry);
+      const coords = decoded.map(p => ({ lat: p[0], lng: p[1] }));
+
+      routePolyline = new mappls.Polyline({ map, path: coords, strokeColor: "#0074D9", strokeWeight: 5 });
+      map.fitBounds(new mappls.LatLngBounds(coords));
+    });
+  </script>
+</body>
+</html>
+
