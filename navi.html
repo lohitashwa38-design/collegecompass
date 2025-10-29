@@ -80,14 +80,14 @@
   <div id="map"></div>
 
   <script>
-    // === Define campus boundaries ===
+    // === Define campus boundaries (slightly east-shifted for real location) ===
     const campusBounds = L.latLngBounds(
-      [12.8665, 80.2125], // Southwest corner
-      [12.8720, 80.2178]  // Northeast corner
+      [12.8665, 80.2220], // Southwest corner
+      [12.8735, 80.2290]  // Northeast corner
     );
 
-    // === Initialize map ===
-    const campusCenter = [12.86913, 80.21484];
+    // === Initialize map centered on college entrance ===
+    const campusCenter = [12.87019, 80.22631]; // College Entrance
     const map = L.map('map', {
       maxBounds: campusBounds,
       maxBoundsViscosity: 1.0,
@@ -161,9 +161,12 @@
       map.fitBounds([userCoords, destCoords], { padding: [50, 50] });
 
       // Add destination marker
-      L.marker(destCoords).addTo(map).bindPopup("🏫 " + destinationSelect.options[destinationSelect.selectedIndex].text).openPopup();
+      L.marker(destCoords).addTo(map)
+        .bindPopup("🏫 " + destinationSelect.options[destinationSelect.selectedIndex].text)
+        .openPopup();
     });
   </script>
 
 </body>
 </html>
+
