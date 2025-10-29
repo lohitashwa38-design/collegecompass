@@ -3,90 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Campus Navigation — St. Joseph’s College of Engineering</title>
+  <title>College Compass — Campus Navigator</title>
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <!-- Leaflet Routing Machine -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100vh; width: 100vw; }
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background-color: #0d0d0d;
+      color: white;
+    }
+    #map {
+      height: 100vh;
+      width: 100vw;
+    }
     .search-box {
       position: absolute;
-      top: 10px;
+      top: 15px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      background: rgba(20, 20, 20, 0.95);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
     select {
-      padding: 5px;
-      font-size: 16px;
+      padding: 8px 12px;
+      font-size: 15px;
+      background: #1a1a1a;
+      color: white;
+      border: 1px solid #333;
+      border-radius: 6px;
     }
   </style>
 </head>
+
 <body>
 
   <div class="search-box">
-    <label for="destination">Select Destination: </label>
+    <label for="destination"><b>Select Destination:</b></label>
     <select id="destination">
-      <option value="">--Choose a location--</option>
+      <option value="">--Choose a Location--</option>
       <option value="12.86840,80.21597">Engineering Auditorium</option>
       <option value="12.86972,80.21508">Library</option>
-      <option value="12.86961,80.21569">MGR Statue</option>
-      <option value="12.87061,80.21600">1st Year Physics Lab</option>
-      <option value="12.87064,80.21603">1st Year Chemistry Lab</option>
+      <option value="12.86961,80.21514">MGR Statue</option>
+      <option value="12.87061,80.21595">1st Year Physics Lab</option>
+      <option value="12.87064,80.21597">1st Year Chemistry Lab</option>
       <option value="12.87078,80.21636">Examination Block</option>
       <option value="12.86986,80.21619">1st Year Computer Science Lab</option>
-      <option value="12.87028,80.21586">Mechanical Lab</option>
-      <option value="12.86950,80.21673">Administration Office Entrance</option>
-      <option value="12.86953,80.21714">Innovation Hackathon Centre</option>
-      <option value="12.87081,80.21703">Department of Placement Block</option>
+      <option value="12.87032,80.21586">Mechanical Lab</option>
+      <option value="12.86949,80.21672">Administration Office Entrance</option>
+      <option value="12.86953,80.21694">Innovation Hackathon Centre</option>
+      <option value="12.87081,80.21688">Department of Placement Block</option>
       <option value="12.87119,80.21586">Bus Bay Entrance</option>
       <option value="12.87139,80.21647">Bus Garage</option>
-      <option value="12.87050,80.21714">1st Entrance of PEP Centre</option>
-      <option value="12.86972,80.21700">2nd Entrance of PEP Centre</option>
-      <option value="12.86775,80.21511">Mens Hostel</option>
+      <option value="12.87050,80.21694">1st Entrance of PEP Centre</option>
+      <option value="12.86972,80.21689">2nd Entrance of PEP Centre</option>
+      <option value="12.86775,80.21512">Mens Hostel</option>
       <option value="12.87133,80.21400">Girls Hostel</option>
-      <option value="12.87147,80.21558">Chapel</option>
+      <option value="12.87148,80.21559">Chapel</option>
       <option value="12.86781,80.21322">St. Joseph's Football Ground</option>
-      <option value="12.86900,80.21639">Block 1</option>
-      <option value="12.86906,80.21608">Block 2</option>
-      <option value="12.86911,80.21589">Block 3</option>
-      <option value="12.86916,80.21550">Block 4</option>
-      <option value="12.86920,80.21528">Block 5</option>
-      <option value="12.86828,80.21658">Department Blocks Road (2nd Year)</option>
+      <option value="12.86900,80.21638">Block 1</option>
+      <option value="12.86904,80.21614">Block 2</option>
+      <option value="12.86906,80.21590">Block 3</option>
+      <option value="12.86909,80.21550">Block 4</option>
+      <option value="12.86911,80.21530">Block 5</option>
+      <option value="12.86827,80.21646">Department Blocks Road (2nd Year)</option>
     </select>
   </div>
 
   <div id="map"></div>
 
   <script>
-    const campusCenter = [12.86913, 80.21484];
-    const map = L.map('map').setView(campusCenter, 17);
+    // === Define campus boundaries ===
+    const campusBounds = L.latLngBounds(
+      [12.8665, 80.2125], // Southwest corner
+      [12.8720, 80.2178]  // Northeast corner
+    );
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
+    // === Initialize map ===
+    const campusCenter = [12.86913, 80.21484];
+    const map = L.map('map', {
+      maxBounds: campusBounds,
+      maxBoundsViscosity: 1.0,
+      minZoom: 16,
+      maxZoom: 19
+    }).setView(campusCenter, 17);
+
+    // Add dark base map
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap, &copy; CARTO'
     }).addTo(map);
 
-    let routingControl = null;
+    // === User location ===
     let userMarker = null;
     let userCoords = null;
+    let routingLine = null;
 
     function showUserLocation(lat, lng) {
       if (!userMarker) {
         userMarker = L.marker([lat, lng], { title: "You are here" })
           .addTo(map)
-          .bindPopup("You are here")
+          .bindPopup("📍 You are here")
           .openPopup();
       } else {
         userMarker.setLatLng([lat, lng]);
@@ -113,33 +136,34 @@
       alert("Geolocation not supported by this browser.");
     }
 
-    document.getElementById("destination").addEventListener("change", function() {
-      const value = this.value;
-      if (!value || !userCoords) {
-        alert("Please allow location access and select a destination.");
+    // === Draw route (straight line within campus) ===
+    const destinationSelect = document.getElementById("destination");
+
+    destinationSelect.addEventListener("change", () => {
+      if (!userCoords) {
+        alert("Please allow location access first.");
         return;
       }
 
-      const [lat, lng] = value.split(",").map(Number);
+      const [lat, lng] = destinationSelect.value.split(",").map(Number);
       const destCoords = [lat, lng];
 
-      if (routingControl) map.removeControl(routingControl);
+      if (routingLine) {
+        map.removeLayer(routingLine);
+      }
 
-      routingControl = L.Routing.control({
-        waypoints: [
-          L.latLng(userCoords[0], userCoords[1]),
-          L.latLng(destCoords[0], destCoords[1])
-        ],
-        routeWhileDragging: false,
-        show: false,
-        addWaypoints: false,
-        draggableWaypoints: false,
-        createMarker: () => null,
-        lineOptions: { styles: [{ color: 'blue', weight: 5 }] }
+      routingLine = L.polyline([userCoords, destCoords], {
+        color: "cyan",
+        weight: 5,
+        opacity: 0.9
       }).addTo(map);
+
+      map.fitBounds([userCoords, destCoords], { padding: [50, 50] });
+
+      // Add destination marker
+      L.marker(destCoords).addTo(map).bindPopup("🏫 " + destinationSelect.options[destinationSelect.selectedIndex].text).openPopup();
     });
   </script>
+
 </body>
 </html>
-
-
